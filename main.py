@@ -114,10 +114,10 @@ class ProfitAutomationOrchestrator:
                 # Calculate daily profit
                 today = datetime.now().date()
                 
-                # Simulate profit calculations (would use real data in production)
-                trading_profit = np.random.uniform(50, 500)
-                content_profit = np.random.uniform(20, 200)
-                arbitrage_profit = np.random.uniform(10, 100)
+                # Retrieve actual profit/revenue from respective modules
+                trading_profit = self.trading_bot.get_profit()
+                content_profit = self.content_generator.get_revenue()
+                arbitrage_profit = self.arbitrage_bot.get_profit()
                 
                 daily_total = trading_profit + content_profit + arbitrage_profit
                 self.daily_profits[today] = daily_total
