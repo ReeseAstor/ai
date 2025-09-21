@@ -18,6 +18,30 @@ An AI-powered platform for generating romance novels using OpenAI's GPT models. 
 - **AI**: OpenAI API (GPT-4o/GPT-5)
 - **Icons**: Lucide React
 
+## Quick Start
+
+1. **Clone and install**:
+   ```bash
+   git clone <repository-url>
+   cd ai-romance-book-factory
+   npm install
+   ```
+
+2. **Set up environment**:
+   ```bash
+   cp .env.local.example .env.local
+   # Edit .env.local with your credentials
+   ```
+
+3. **Set up database**:
+   - Create a Supabase project
+   - Run the SQL files in order: `supabase_schema.sql`, `supabase_migrations.sql`, `supabase_seed.sql`
+
+4. **Run the app**:
+   ```bash
+   npm run dev
+   ```
+
 ## Setup Instructions
 
 ### 1. Prerequisites
@@ -152,17 +176,28 @@ The application uses the following main tables:
 - `final_chapters`: Approved final versions
 - `feedback`: Beta reader feedback
 
+## Current Features
+
+✅ **Project Management**: Create and manage romance novel projects with full metadata
+✅ **Chapter Management**: Add, organize, and track individual chapters
+✅ **AI Draft Generation**: Generate chapter drafts using OpenAI's GPT models
+✅ **Chapter Viewer**: View and download AI-generated content with draft management
+✅ **Cost Tracking**: Automatic tracking of AI generation costs per project
+✅ **Beautiful UI**: Modern, responsive interface with romantic theme
+✅ **Database Integration**: Full Supabase integration with proper schema
+
 ## Future Enhancements
 
 - [ ] User authentication and authorization
-- [ ] Project creation and editing UI
-- [ ] Chapter content viewer and editor
+- [ ] Project editing UI
 - [ ] Beta reader feedback system
 - [ ] Export to various formats (EPUB, PDF)
 - [ ] Advanced prompt customization
 - [ ] Multiple AI model support
 - [ ] Revision and editing workflows
 - [ ] Publishing integration
+- [ ] Real-time collaboration
+- [ ] Advanced analytics and reporting
 
 ## Contributing
 

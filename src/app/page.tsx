@@ -5,10 +5,12 @@ import { supabase } from '@/lib/supabase';
 import { Project } from '@/types/database';
 import Link from 'next/link';
 import { BookOpen, Plus, Loader2, TrendingUp, Clock, DollarSign } from 'lucide-react';
+import CreateProjectModal from '@/components/CreateProjectModal';
 
 export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     fetchProjects();
@@ -28,6 +30,10 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleProjectCreated = (newProject: Project) => {
+    setProjects(prev => [newProject, ...prev]);
   };
 
   const getStatusColor = (status: string) => {
@@ -112,7 +118,10 @@ export default function HomePage() {
       <div className="card">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Projects</h2>
-          <button className="btn-primary flex items-center gap-2">
+          <button 
+            onClick={() => setShowCreateModal(true)}
+            className="btn-primary flex items-center gap-2"
+          >
             <Plus className="w-4 h-4" />
             New Project
           </button>
@@ -187,6 +196,13 @@ export default function HomePage() {
           </div>
         )}
       </div>
+
+      {/* Create Project Modal */}
+      <CreateProjectModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onProjectCreated={handleProjectCreated}
+      />
     </div>
   );
 }

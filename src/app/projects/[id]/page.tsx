@@ -6,6 +6,8 @@ import { supabase } from '@/lib/supabase';
 import { Project, Chapter, AIDraft } from '@/types/database';
 import { BookOpen, Sparkles, Clock, Target, DollarSign, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import CreateChapterModal from '@/components/CreateChapterModal';
+import ChapterViewer from '@/components/ChapterViewer';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -15,6 +17,9 @@ export default function ProjectDetailPage() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [generatingDraft, setGeneratingDraft] = useState<string | null>(null);
+  const [showCreateChapterModal, setShowCreateChapterModal] = useState(false);
+  const [showChapterViewer, setShowChapterViewer] = useState(false);
+  const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
 
   useEffect(() => {
     if (projectId) {
@@ -82,6 +87,20 @@ export default function ProjectDetailPage() {
     } finally {
       setGeneratingDraft(null);
     }
+  };
+
+  const handleChapterCreated = (newChapter: Chapter) => {
+    setChapters(prev => [...prev, newChapter].sort((a, b) => a.chapter_number - b.chapter_number));
+  };
+
+  const handleViewChapter = (chapter: Chapter) => {
+    setSelectedChapter(chapter);
+    setShowChapterViewer(true);
+  };
+
+  const getNextChapterNumber = () => {
+    if (chapters.length === 0) return 1;
+    return Math.max(...chapters.map(c => c.chapter_number)) + 1;
   };
 
   const getStatusColor = (status: string) => {
@@ -188,7 +207,10 @@ export default function ProjectDetailPage() {
       <div className="card">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Chapters</h2>
-          <button className="btn-primary flex items-center gap-2">
+          <button 
+            onClick={() => setShowCreateChapterModal(true)}
+            className="btn-primary flex items-center gap-2"
+          >
             <Sparkles className="w-4 h-4" />
             Add Chapter
           </button>
@@ -258,7 +280,10 @@ export default function ProjectDetailPage() {
                         )}
                       </button>
                     ) : (
-                      <button className="btn-secondary">
+                      <button 
+                        onClick={() => handleViewChapter(chapter)}
+                        className="btn-secondary"
+                      >
                         View Chapter
                       </button>
                     )}
@@ -269,6 +294,29 @@ export default function ProjectDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Create Chapter Modal */}
+      <CreateChapterModal
+        isOpen={showCreateChapterModal}
+        onClose={() => setShowCreateChapterModal(false)}
+        onChapterCreated={handleChapterCreated}
+        projectId={projectId}
+        nextChapterNumber={getNextChapterNumber()}
+      />
+
+      {/* Chapter Viewer Modal */}
+      {selectedChapter && (
+        <ChapterViewer
+          isOpen={showChapterViewer}
+          onClose={() => {
+            setShowChapterViewer(false);
+            setSelectedChapter(null);
+          }}
+          chapterId={selectedChapter.id}
+          chapterTitle={selectedChapter.title || ''}
+          chapterNumber={selectedChapter.chapter_number}
+        />
+      )}
     </div>
   );
 }
