@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Project, Chapter, AIDraft } from '@/types/database';
-import { BookOpen, Sparkles, Clock, Target, DollarSign, Loader2 } from 'lucide-react';
+import { BookOpen, Sparkles, Clock, Target, DollarSign, Loader2, X, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function ProjectDetailPage() {
@@ -15,6 +15,13 @@ export default function ProjectDetailPage() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [generatingDraft, setGeneratingDraft] = useState<string | null>(null);
+  const [isAddChapterOpen, setIsAddChapterOpen] = useState(false);
+  const [creatingChapter, setCreatingChapter] = useState(false);
+  const [chapterForm, setChapterForm] = useState({
+    chapter_number: '',
+    title: '',
+    target_word_count: '3000',
+  });
 
   useEffect(() => {
     if (projectId) {
@@ -81,6 +88,46 @@ export default function ProjectDetailPage() {
       toast.error(error instanceof Error ? error.message : 'Failed to generate AI draft');
     } finally {
       setGeneratingDraft(null);
+    }
+  };
+
+  const handleCreateChapter = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const chapterNumber = Number(chapterForm.chapter_number);
+    const targetCount = Number(chapterForm.target_word_count);
+    if (!Number.isInteger(chapterNumber) || chapterNumber <= 0) {
+      toast.error('Chapter number must be a positive integer');
+      return;
+    }
+    if (!Number.isInteger(targetCount) || targetCount <= 0) {
+      toast.error('Target word count must be a positive integer');
+      return;
+    }
+    setCreatingChapter(true);
+    try {
+      const res = await fetch('/api/chapters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          project_id: projectId,
+          chapter_number: chapterNumber,
+          title: chapterForm.title.trim() || null,
+          target_word_count: targetCount,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to add chapter');
+      }
+      toast.success('Chapter added');
+      setIsAddChapterOpen(false);
+      setChapterForm({ chapter_number: '', title: '', target_word_count: '3000' });
+      await fetchProjectData();
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : 'Failed to add chapter');
+    } finally {
+      setCreatingChapter(false);
     }
   };
 
@@ -188,8 +235,8 @@ export default function ProjectDetailPage() {
       <div className="card">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Chapters</h2>
-          <button className="btn-primary flex items-center gap-2">
-            <Sparkles className="w-4 h-4" />
+          <button className="btn-primary flex items-center gap-2" onClick={() => setIsAddChapterOpen(true)}>
+            <Plus className="w-4 h-4" />
             Add Chapter
           </button>
         </div>
@@ -269,6 +316,71 @@ export default function ProjectDetailPage() {
           </div>
         )}
       </div>
+      {isAddChapterOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => !creatingChapter && setIsAddChapterOpen(false)} />
+          <div className="relative z-10 w-full max-w-xl mx-4">
+            <div className="card">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-gray-900">Add Chapter</h3>
+                <button
+                  className="text-gray-500 hover:text-gray-700"
+                  onClick={() => !creatingChapter && setIsAddChapterOpen(false)}
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <form onSubmit={handleCreateChapter} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Chapter Number</label>
+                  <input
+                    type="number"
+                    min={1}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    value={chapterForm.chapter_number}
+                    onChange={(e) => setChapterForm({ ...chapterForm, chapter_number: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Title (optional)</label>
+                  <input
+                    type="text"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    value={chapterForm.title}
+                    onChange={(e) => setChapterForm({ ...chapterForm, title: e.target.value })}
+                    placeholder="Chapter title"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Target Word Count</label>
+                  <input
+                    type="number"
+                    min={1}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    value={chapterForm.target_word_count}
+                    onChange={(e) => setChapterForm({ ...chapterForm, target_word_count: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button type="button" className="btn-secondary" onClick={() => setIsAddChapterOpen(false)} disabled={creatingChapter}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn-primary disabled:opacity-50" disabled={creatingChapter}>
+                    {creatingChapter ? (
+                      <span className="inline-flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Adding...</span>
+                    ) : (
+                      'Add Chapter'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -4,11 +4,30 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Project } from '@/types/database';
 import Link from 'next/link';
-import { BookOpen, Plus, Loader2, TrendingUp, Clock, DollarSign } from 'lucide-react';
+import { BookOpen, Plus, Loader2, TrendingUp, Clock, DollarSign, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const povOptions = [
+    'first_person',
+    'third_person_limited',
+    'third_person_omniscient',
+    'dual_pov',
+    'multi_pov',
+  ];
+  const heatOptions = ['sweet', 'mild', 'moderate', 'steamy', 'explicit'];
+  const [form, setForm] = useState({
+    title: '',
+    genre: '',
+    tropes: '',
+    pov: povOptions[0],
+    heat_level: heatOptions[2],
+    deadline: '',
+  });
 
   useEffect(() => {
     fetchProjects();
@@ -27,6 +46,47 @@ export default function HomePage() {
       console.error('Error fetching projects:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.title.trim() || !form.genre.trim()) {
+      toast.error('Please provide both title and genre');
+      return;
+    }
+    setCreating(true);
+    try {
+      const tropesArray = form.tropes
+        .split(',')
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0);
+      const res = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: form.title.trim(),
+          genre: form.genre.trim(),
+          tropes: tropesArray,
+          pov: form.pov,
+          heat_level: form.heat_level,
+          status: 'planning',
+          deadline: form.deadline ? form.deadline : null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to create project');
+      }
+      toast.success('Project created');
+      setIsNewProjectOpen(false);
+      setForm({ title: '', genre: '', tropes: '', pov: povOptions[0], heat_level: heatOptions[2], deadline: '' });
+      await fetchProjects();
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : 'Failed to create project');
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -112,7 +172,7 @@ export default function HomePage() {
       <div className="card">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Projects</h2>
-          <button className="btn-primary flex items-center gap-2">
+          <button className="btn-primary flex items-center gap-2" onClick={() => setIsNewProjectOpen(true)}>
             <Plus className="w-4 h-4" />
             New Project
           </button>
@@ -187,6 +247,104 @@ export default function HomePage() {
           </div>
         )}
       </div>
+      {isNewProjectOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => !creating && setIsNewProjectOpen(false)} />
+          <div className="relative z-10 w-full max-w-xl mx-4">
+            <div className="card">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-semibold text-gray-900">New Project</h3>
+                <button
+                  className="text-gray-500 hover:text-gray-700"
+                  onClick={() => !creating && setIsNewProjectOpen(false)}
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <form onSubmit={handleCreateProject} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                  <input
+                    type="text"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    value={form.title}
+                    onChange={(e) => setForm({ ...form, title: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Genre</label>
+                  <input
+                    type="text"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    value={form.genre}
+                    onChange={(e) => setForm({ ...form, genre: e.target.value })}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tropes (comma separated)</label>
+                  <input
+                    type="text"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    value={form.tropes}
+                    onChange={(e) => setForm({ ...form, tropes: e.target.value })}
+                    placeholder="Enemies to Lovers, Fake Dating"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">POV</label>
+                    <select
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      value={form.pov}
+                      onChange={(e) => setForm({ ...form, pov: e.target.value })}
+                    >
+                      {povOptions.map((p) => (
+                        <option key={p} value={p}>{p.replace(/_/g, ' ')}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Heat Level</label>
+                    <select
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      value={form.heat_level}
+                      onChange={(e) => setForm({ ...form, heat_level: e.target.value })}
+                    >
+                      {heatOptions.map((h) => (
+                        <option key={h} value={h}>{h}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
+                  <input
+                    type="date"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    value={form.deadline}
+                    onChange={(e) => setForm({ ...form, deadline: e.target.value })}
+                  />
+                </div>
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button type="button" className="btn-secondary" onClick={() => setIsNewProjectOpen(false)} disabled={creating}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn-primary disabled:opacity-50" disabled={creating}>
+                    {creating ? (
+                      <span className="inline-flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Creating...</span>
+                    ) : (
+                      'Create Project'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
