@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { Project, Chapter, AIDraft } from '@/types/database';
 import { BookOpen, Sparkles, Clock, Target, DollarSign, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import NewChapterModal from '@/components/NewChapterModal';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -15,6 +16,7 @@ export default function ProjectDetailPage() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [generatingDraft, setGeneratingDraft] = useState<string | null>(null);
+  const [showNewChapterModal, setShowNewChapterModal] = useState(false);
 
   useEffect(() => {
     if (projectId) {
@@ -188,7 +190,10 @@ export default function ProjectDetailPage() {
       <div className="card">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Chapters</h2>
-          <button className="btn-primary flex items-center gap-2">
+          <button 
+            onClick={() => setShowNewChapterModal(true)}
+            className="btn-primary flex items-center gap-2"
+          >
             <Sparkles className="w-4 h-4" />
             Add Chapter
           </button>
@@ -202,7 +207,18 @@ export default function ProjectDetailPage() {
         ) : (
           <div className="space-y-4">
             {chapters.map((chapter) => (
-              <div key={chapter.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div 
+                key={chapter.id} 
+                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={(e) => {
+                  // Only navigate if not clicking on a button
+                  if (!(e.target as HTMLElement).closest('button')) {
+                    if (chapter.status !== 'not_started') {
+                      window.location.href = `/chapters/${chapter.id}`;
+                    }
+                  }
+                }}
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
@@ -258,7 +274,10 @@ export default function ProjectDetailPage() {
                         )}
                       </button>
                     ) : (
-                      <button className="btn-secondary">
+                      <button 
+                        onClick={() => window.location.href = `/chapters/${chapter.id}`}
+                        className="btn-secondary"
+                      >
                         View Chapter
                       </button>
                     )}
@@ -269,6 +288,15 @@ export default function ProjectDetailPage() {
           </div>
         )}
       </div>
+
+      {/* New Chapter Modal */}
+      <NewChapterModal
+        isOpen={showNewChapterModal}
+        onClose={() => setShowNewChapterModal(false)}
+        projectId={projectId}
+        nextChapterNumber={chapters.length + 1}
+        onChapterCreated={fetchProjectData}
+      />
     </div>
   );
 }
