@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       .insert({
         title,
         genre,
-        tropes: tropes || [],
+        tropes,
         pov,
         heat_level,
         status,
