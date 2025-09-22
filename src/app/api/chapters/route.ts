@@ -5,7 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 const createChapterSchema = z.object({
   project_id: z.string().uuid(),
   chapter_number: z.number().int().positive(),
-  title: z.string().min(1).optional().nullable(),
+  title: z.string().min(1).nullish(),
   target_word_count: z.number().int().positive().optional().default(3000),
 });
 
