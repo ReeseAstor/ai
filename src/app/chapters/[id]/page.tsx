@@ -129,7 +129,7 @@ export default function ChapterDetailPage() {
         .from('chapters')
         .update({
           status: 'draft_complete',
-          word_count: editContent.split(' ').length,
+          word_count: editContent.trim().split(/\s+/).filter(word => word.length > 0).length,
         })
         .eq('id', chapterId);
 
