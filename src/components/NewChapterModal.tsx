@@ -120,7 +120,13 @@ export default function NewChapterModal({
               max="10000"
               step="100"
               value={formData.target_word_count}
-              onChange={(e) => setFormData(prev => ({ ...prev, target_word_count: parseInt(e.target.value) }))}
+              onChange={(e) => {
+                const value = parseInt(e.target.value);
+                setFormData(prev => ({
+                  ...prev,
+                  target_word_count: Number.isNaN(value) ? 500 : value
+                }));
+              }}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             />
             <p className="mt-1 text-sm text-gray-500">
