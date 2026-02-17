@@ -192,6 +192,13 @@ export default function HomePage() {
           </div>
         )}
       </div>
+
+      {/* New Project Modal */}
+      <NewProjectModal 
+        isOpen={showNewProjectModal}
+        onClose={() => setShowNewProjectModal(false)}
+        onProjectCreated={fetchProjects}
+      />
     </div>
   );
 }
