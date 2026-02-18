@@ -1,25 +1,27 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Project, Chapter, AIDraft } from '@/types/database';
-import { BookOpen, Sparkles, Clock, Target, DollarSign, Loader2 } from 'lucide-react';
+import { BookOpen, Sparkles, Clock, Target, DollarSign, Loader2, Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
-import CreateChapterModal from '@/components/CreateChapterModal';
-import ChapterViewer from '@/components/ChapterViewer';
+import NewChapterModal from '@/components/NewChapterModal';
 
 export default function ProjectDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const projectId = params.id as string;
   
   const [project, setProject] = useState<Project | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [generatingDraft, setGeneratingDraft] = useState<string | null>(null);
-  const [showCreateChapterModal, setShowCreateChapterModal] = useState(false);
-  const [showChapterViewer, setShowChapterViewer] = useState(false);
-  const [selectedChapter, setSelectedChapter] = useState<Chapter | null>(null);
+  const [showAddChapterModal, setShowAddChapterModal] = useState(false);
+  const [newChapterForm, setNewChapterForm] = useState({
+    title: '',
+    target_word_count: 2000
+  });
 
   useEffect(() => {
     if (projectId) {
@@ -56,9 +58,48 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const handleAddChapter = async () => {
+    if (!newChapterForm.title.trim()) {
+      toast.error('Chapter title is required');
+      return;
+    }
+
+    try {
+      // Get the next chapter number
+      const nextChapterNumber = chapters.length > 0
+        ? Math.max(...chapters.map(c => c.chapter_number)) + 1
+        : 1;
+
+      const { data: newChapter, error } = await supabase
+        .from('chapters')
+        .insert({
+          project_id: projectId,
+          chapter_number: nextChapterNumber,
+          title: newChapterForm.title.trim(),
+          status: 'not_started',
+          word_count: 0,
+          target_word_count: newChapterForm.target_word_count
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success('Chapter added successfully!');
+      setShowAddChapterModal(false);
+      setNewChapterForm({ title: '', target_word_count: 2000 });
+
+      // Refresh project data to include the new chapter
+      await fetchProjectData();
+    } catch (error) {
+      console.error('Error adding chapter:', error);
+      toast.error('Failed to add chapter');
+    }
+  };
+
   const handleGenerateAIDraft = async (chapterId: string) => {
     setGeneratingDraft(chapterId);
-    
+
     try {
       const response = await fetch('/api/ai-draft', {
         method: 'POST',
@@ -78,7 +119,7 @@ export default function ProjectDetailPage() {
       }
 
       toast.success(data.message || 'AI draft generated successfully!');
-      
+
       // Refresh chapters to show updated status
       await fetchProjectData();
     } catch (error) {
@@ -207,11 +248,11 @@ export default function ProjectDetailPage() {
       <div className="card">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Chapters</h2>
-          <button 
-            onClick={() => setShowCreateChapterModal(true)}
+          <button
+            onClick={() => setShowAddChapterModal(true)}
             className="btn-primary flex items-center gap-2"
           >
-            <Sparkles className="w-4 h-4" />
+            <Plus className="w-4 h-4" />
             Add Chapter
           </button>
         </div>
@@ -224,7 +265,18 @@ export default function ProjectDetailPage() {
         ) : (
           <div className="space-y-4">
             {chapters.map((chapter) => (
-              <div key={chapter.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div 
+                key={chapter.id} 
+                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                onClick={(e) => {
+                  // Only navigate if not clicking on a button
+                  if (!(e.target as HTMLElement).closest('button')) {
+                    if (chapter.status !== 'not_started') {
+                      window.location.href = `/chapters/${chapter.id}`;
+                    }
+                  }
+                }}
+              >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
@@ -280,8 +332,8 @@ export default function ProjectDetailPage() {
                         )}
                       </button>
                     ) : (
-                      <button 
-                        onClick={() => handleViewChapter(chapter)}
+                      <button
+                        onClick={() => router.push(`/projects/${projectId}/chapters/${chapter.id}`)}
                         className="btn-secondary"
                       >
                         View Chapter
@@ -295,27 +347,61 @@ export default function ProjectDetailPage() {
         )}
       </div>
 
-      {/* Create Chapter Modal */}
-      <CreateChapterModal
-        isOpen={showCreateChapterModal}
-        onClose={() => setShowCreateChapterModal(false)}
-        onChapterCreated={handleChapterCreated}
-        projectId={projectId}
-        nextChapterNumber={getNextChapterNumber()}
-      />
+      {/* Add Chapter Modal */}
+      {showAddChapterModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Add New Chapter</h3>
 
-      {/* Chapter Viewer Modal */}
-      {selectedChapter && (
-        <ChapterViewer
-          isOpen={showChapterViewer}
-          onClose={() => {
-            setShowChapterViewer(false);
-            setSelectedChapter(null);
-          }}
-          chapterId={selectedChapter.id}
-          chapterTitle={selectedChapter.title || ''}
-          chapterNumber={selectedChapter.chapter_number}
-        />
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Chapter Title *
+                </label>
+                <input
+                  type="text"
+                  value={newChapterForm.title}
+                  onChange={(e) => setNewChapterForm(prev => ({ ...prev, title: e.target.value }))}
+                  className="input-field"
+                  placeholder="Enter chapter title"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Target Word Count
+                </label>
+                <input
+                  type="number"
+                  value={newChapterForm.target_word_count}
+                  onChange={(e) => setNewChapterForm(prev => ({ ...prev, target_word_count: parseInt(e.target.value) || 2000 }))}
+                  className="input-field"
+                  min="100"
+                  max="10000"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowAddChapterModal(false);
+                  setNewChapterForm({ title: '', target_word_count: 2000 });
+                }}
+                className="btn-secondary"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddChapter}
+                className="btn-primary"
+              >
+                Add Chapter
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

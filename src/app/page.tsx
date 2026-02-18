@@ -5,12 +5,12 @@ import { supabase } from '@/lib/supabase';
 import { Project } from '@/types/database';
 import Link from 'next/link';
 import { BookOpen, Plus, Loader2, TrendingUp, Clock, DollarSign } from 'lucide-react';
-import CreateProjectModal from '@/components/CreateProjectModal';
+import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     fetchProjects();
@@ -118,8 +118,8 @@ export default function HomePage() {
       <div className="card">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Projects</h2>
-          <button 
-            onClick={() => setShowCreateModal(true)}
+          <button
+            onClick={() => router.push('/new-project')}
             className="btn-primary flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
@@ -197,11 +197,11 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* Create Project Modal */}
-      <CreateProjectModal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onProjectCreated={handleProjectCreated}
+      {/* New Project Modal */}
+      <NewProjectModal 
+        isOpen={showNewProjectModal}
+        onClose={() => setShowNewProjectModal(false)}
+        onProjectCreated={fetchProjects}
       />
     </div>
   );

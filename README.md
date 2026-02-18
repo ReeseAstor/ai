@@ -1,208 +1,139 @@
-# AI Romance Book Factory
+# Romance Book Factory - AI-Powered Romance Novel Creation Platform
 
-An AI-powered platform for generating romance novels using OpenAI's GPT models. This application allows you to manage romance book projects, generate AI drafts for chapters, and track the progress of your novels.
+A Next.js 14 application with Supabase integration for creating and managing AI-generated romance novels.
 
 ## Features
 
-- 📚 **Project Management**: Create and manage multiple romance novel projects
-- 🤖 **AI Draft Generation**: Generate chapter drafts using OpenAI's GPT-4o or GPT-5
-- 📊 **Progress Tracking**: Track chapter status, word counts, and project costs
-- 💰 **Cost Management**: Automatic tracking of AI generation costs
-- 🎨 **Beautiful UI**: Modern, responsive interface with a romantic theme
+- **Authentication**: Email/password authentication with role-based access (Admin, AI Agent, Beta Reader)
+- **Project Management**: Create and manage romance book projects with metadata tracking
+- **Chapter Organization**: Structure books into chapters with status tracking
+- **AI Draft Generation**: Generate and iterate on chapter content using AI models
+- **Beta Reader Feedback**: Collect ratings and feedback from beta readers
+- **Business Metrics**: Track costs and ROI for each project
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes
+- **Frontend**: Next.js 14 with App Router
+- **Styling**: TailwindCSS
 - **Database**: Supabase (PostgreSQL)
-- **AI**: OpenAI API (GPT-4o/GPT-5)
-- **Icons**: Lucide React
+- **Authentication**: Supabase Auth
+- **TypeScript**: Full type safety
 
-## Quick Start
+## Getting Started
 
-1. **Clone and install**:
-   ```bash
-   git clone <repository-url>
-   cd ai-romance-book-factory
-   npm install
-   ```
-
-2. **Set up environment**:
-   ```bash
-   cp .env.local.example .env.local
-   # Edit .env.local with your credentials
-   ```
-
-3. **Set up database**:
-   - Create a Supabase project
-   - Run the SQL files in order: `supabase_schema.sql`, `supabase_migrations.sql`, `supabase_seed.sql`
-
-4. **Run the app**:
-   ```bash
-   npm run dev
-   ```
-
-## Setup Instructions
-
-### 1. Prerequisites
+### Prerequisites
 
 - Node.js 18+ installed
-- Supabase account
-- OpenAI API key
+- Supabase account and project
 
-### 2. Database Setup
+### Installation
 
-1. Create a new Supabase project at [supabase.com](https://supabase.com)
+1. Clone the repository:
+```bash
+git clone <your-repo-url>
+cd romance-book-factory
+```
 
-2. Run the database schema:
-   - Go to the SQL Editor in your Supabase dashboard
-   - Copy the contents of `supabase_schema.sql`
-   - Run the SQL to create all tables and types
-
-3. Run the migration for the ai_draft status:
-   - Copy the contents of `supabase_migrations.sql`
-   - Run the SQL in the SQL Editor
-
-4. (Optional) Add sample data:
-   - Copy the contents of `supabase_seed.sql`
-   - Run the SQL to add sample projects and chapters
-
-### 3. Environment Configuration
-
-1. Copy the example environment file:
-   ```bash
-   cp .env.local.example .env.local
-   ```
-
-2. Update `.env.local` with your credentials:
-   ```
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-   OPENAI_API_KEY=your_openai_api_key
-   OPENAI_MODEL=gpt-4o
-   NEXT_PUBLIC_APP_URL=http://localhost:3000
-   ```
-
-### 4. Installation
-
-Install dependencies:
+2. Install dependencies:
 ```bash
 npm install
 ```
 
-### 5. Run the Application
+3. Set up environment variables:
+```bash
+cp .env.local.example .env.local
+```
 
-Start the development server:
+Edit `.env.local` with your Supabase credentials:
+```
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+4. Set up the database:
+   - Go to your Supabase project SQL editor
+   - Run the SQL script from `supabase_schema.sql`
+
+5. Run the development server:
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000) to see the application.
 
-## Usage
+## Project Structure
 
-### Creating a Project
-
-1. Navigate to the home page
-2. Click "New Project" (functionality to be implemented)
-3. Fill in project details including title, genre, tropes, POV, and heat level
-
-### Generating AI Drafts
-
-1. Click on a project to view its details
-2. Find the chapter you want to generate
-3. Click the "Generate AI Draft" button
-4. The AI will generate a draft based on:
-   - Project metadata (genre, tropes, POV, heat level)
-   - Chapter number and title
-   - Previous chapter context (if available)
-   - Target word count
-
-### Chapter Status Flow
-
-- `not_started` → Initial state
-- `in_progress` → Being worked on
-- `ai_draft` → AI draft has been generated
-- `draft_complete` → Human-edited draft ready
-- `under_review` → Being reviewed
-- `approved` → Approved for publication
-- `published` → Published
+```
+/
+├── app/                    # Next.js app router pages
+│   ├── api/               # API routes for CRUD operations
+│   │   ├── projects/      # Project endpoints
+│   │   ├── chapters/      # Chapter endpoints
+│   │   └── drafts/        # AI draft endpoints
+│   ├── auth/              # Authentication pages
+│   ├── dashboard/         # Main dashboard
+│   └── projects/          # Project management pages
+├── components/            # React components
+│   └── auth/             # Authentication components
+├── lib/                   # Utility libraries
+│   └── supabase/         # Supabase client configuration
+├── types/                 # TypeScript type definitions
+└── public/               # Static assets
+```
 
 ## API Endpoints
 
-### POST /api/ai-draft
-Generates an AI draft for a chapter.
+### Projects
+- `GET /api/projects` - List all projects
+- `POST /api/projects` - Create new project
+- `GET /api/projects/[id]` - Get single project
+- `PUT /api/projects/[id]` - Update project
+- `DELETE /api/projects/[id]` - Delete project
 
-**Request Body:**
-```json
-{
-  "chapterId": "chapter-uuid",
-  "projectId": "project-uuid"
-}
-```
+### Chapters
+- `GET /api/chapters?project_id=` - List chapters for a project
+- `POST /api/chapters` - Create new chapter
+- `GET /api/chapters/[id]` - Get single chapter
+- `PUT /api/chapters/[id]` - Update chapter
+- `DELETE /api/chapters/[id]` - Delete chapter
 
-**Response:**
-```json
-{
-  "success": true,
-  "draft": {
-    "id": "draft-uuid",
-    "content": "Generated chapter content...",
-    "model_used": "gpt-4o",
-    "pass_number": 1,
-    "total_cost": 0.0234
-  },
-  "message": "AI draft generated successfully (Pass 1)"
-}
-```
-
-## Cost Tracking
-
-The application automatically tracks OpenAI API costs:
-- GPT-4o: $5/1M input tokens, $15/1M output tokens
-- GPT-4 Turbo: $10/1M input tokens, $30/1M output tokens
-- GPT-3.5 Turbo: $0.50/1M input tokens, $1.50/1M output tokens
-
-Costs are stored per draft and aggregated at the project level.
+### AI Drafts
+- `GET /api/drafts?chapter_id=` - List drafts for a chapter
+- `POST /api/drafts` - Create new draft
+- `GET /api/drafts/[id]` - Get single draft
+- `DELETE /api/drafts/[id]` - Delete draft
+- `POST /api/drafts/[id]/finalize` - Convert draft to final chapter
 
 ## Database Schema
 
 The application uses the following main tables:
-- `users`: System users (admins, AI agents, beta readers)
-- `projects`: Romance book projects
-- `chapters`: Individual chapters within projects
-- `ai_drafts`: AI-generated chapter drafts
-- `final_chapters`: Approved final versions
-- `feedback`: Beta reader feedback
 
-## Current Features
+- **users**: System users with roles (admin, ai_agent, beta_reader)
+- **projects**: Romance book projects with metadata
+- **chapters**: Individual chapters within projects
+- **ai_drafts**: AI-generated content iterations
+- **final_chapters**: Approved final versions
+- **feedback**: Beta reader ratings and comments
 
-✅ **Project Management**: Create and manage romance novel projects with full metadata
-✅ **Chapter Management**: Add, organize, and track individual chapters
-✅ **AI Draft Generation**: Generate chapter drafts using OpenAI's GPT models
-✅ **Chapter Viewer**: View and download AI-generated content with draft management
-✅ **Cost Tracking**: Automatic tracking of AI generation costs per project
-✅ **Beautiful UI**: Modern, responsive interface with romantic theme
-✅ **Database Integration**: Full Supabase integration with proper schema
+## Development
 
-## Future Enhancements
+### Building for Production
 
-- [ ] User authentication and authorization
-- [ ] Project editing UI
-- [ ] Beta reader feedback system
-- [ ] Export to various formats (EPUB, PDF)
-- [ ] Advanced prompt customization
-- [ ] Multiple AI model support
-- [ ] Revision and editing workflows
-- [ ] Publishing integration
-- [ ] Real-time collaboration
-- [ ] Advanced analytics and reporting
+```bash
+npm run build
+npm start
+```
 
-## Contributing
+### Type Generation
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+TypeScript types are defined in `/types/database.ts`. Update these when modifying the database schema.
+
+## Security
+
+- Row Level Security (RLS) policies are implemented in Supabase
+- Authentication required for all API endpoints
+- Role-based access control for sensitive operations
 
 ## License
 
-This project is licensed under the MIT License.
+MIT
