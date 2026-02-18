@@ -130,6 +130,20 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const handleChapterCreated = (newChapter: Chapter) => {
+    setChapters(prev => [...prev, newChapter].sort((a, b) => a.chapter_number - b.chapter_number));
+  };
+
+  const handleViewChapter = (chapter: Chapter) => {
+    setSelectedChapter(chapter);
+    setShowChapterViewer(true);
+  };
+
+  const getNextChapterNumber = () => {
+    if (chapters.length === 0) return 1;
+    return Math.max(...chapters.map(c => c.chapter_number)) + 1;
+  };
+
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'not_started': 'bg-gray-100 text-gray-800',

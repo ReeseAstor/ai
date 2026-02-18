@@ -32,6 +32,10 @@ export default function HomePage() {
     }
   };
 
+  const handleProjectCreated = (newProject: Project) => {
+    setProjects(prev => [newProject, ...prev]);
+  };
+
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       'planning': 'bg-blue-100 text-blue-800',
